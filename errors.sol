@@ -1,25 +1,31 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.26;
 
 contract OwnershipContract {
-    address public owner;
+    struct Owner {
+        address addr;
+        bool isOwner;
+    }
+    Owner public owner;
     bool public isActive;
 
     constructor() {
-        owner = msg.sender;
+        owner = Owner({addr: msg.sender, isOwner: true});
         isActive = false;
     }
 
     modifier onlyOwner {
-        require(msg.sender == owner, "Only the owner can access.");
+        require(msg.sender == owner.addr && owner.isOwner, "Only the owner can access.");
         _;
     }
 
     function activate() public onlyOwner {
+        require(!isActive, "Contract is already active");
         isActive = true;
     }
 
     function deactivate() public onlyOwner {
+        require(isActive, "Contract is already inactive");
         isActive = false;
     }
 
@@ -32,6 +38,9 @@ contract OwnershipContract {
     }
 
     function verifyOwner() public view {
-        assert(msg.sender == owner);
+        if (msg.sender != owner.addr) {
+            revert("Ownership is not valid.");
+        }
+        assert(msg.sender == owner.addr && owner.isOwner);
     }
 }
